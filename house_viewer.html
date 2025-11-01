@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Interactive 3D House Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin:0; overflow:hidden; font-family: sans-serif; }
+    #info { position: absolute; left: 10px; top: 10px; z-index: 10; background: rgba(255,255,255,0.9); padding:8px; border-radius:6px; }
+    #credits { position: absolute; right: 10px; bottom: 10px; z-index: 10; background: rgba(255,255,255,0.9); padding:6px; border-radius:6px; font-size:12px;}
+    canvas { display:block; }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <strong>3D House Viewer</strong><br>
+    Walls: 6" thick — Height: 11 ft — Units: feet<br>
+    Use mouse to orbit, zoom, pan. Toggle floors with G / F / A keys.
+  </div>
+  <div id="credits">Created for Ratan — simple 3D home model</div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xececec);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.set(60, 50, 80);
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(20, 5, 15); controls.update();
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x666666, 0.9); hemi.position.set(0, 100, 0); scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.6); dir.position.set(50, 80, 25); scene.add(dir);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({color:0xf6f6f6, side:THREE.DoubleSide}));
+    ground.rotation.x = -Math.PI/2; ground.position.y = 0; scene.add(ground);
+    const scale = 1, wallT = 0.5, wallH = 11, w = 40, d = 30;
+    function wall(x,y,z,wx,h,dz,color){const m=new THREE.Mesh(new THREE.BoxGeometry(wx,h,dz),new THREE.MeshStandardMaterial({color}));m.position.set(x,h/2+y,z);scene.add(m);return m;}
+    const gf = new THREE.Group(); const ff = new THREE.Group(); const mat = new THREE.MeshStandardMaterial({color:0xffffff});
+    const hw=w/2, hd=d/2;
+    gf.add(wall(0,0,-hd,w+wallT,wallH,wallT,0xffffff));
+    gf.add(wall(0,0,hd,w+wallT,wallH,wallT,0xffffff));
+    gf.add(wall(-hw,0,0,wallT,wallH,d+wallT,0xffffff));
+    gf.add(wall(hw,0,0,wallT,wallH,d+wallT,0xffffff));
+    const floorGF=new THREE.Mesh(new THREE.BoxGeometry(w-1,0.2,d-1),new THREE.MeshStandardMaterial({color:0xf2e6d9}));
+    floorGF.position.y=0.1; gf.add(floorGF); scene.add(gf);
+    ff.position.y=wallH+0.2;
+    ff.add(wall(0,0,-hd,w+wallT,wallH,wallT,0xffffff));
+    ff.add(wall(0,0,hd,w+wallT,wallH,wallT,0xffffff));
+    ff.add(wall(-hw,0,0,wallT,wallH,d+wallT,0xffffff));
+    ff.add(wall(hw,0,0,wallT,wallH,d+wallT,0xffffff));
+    const floorFF=new THREE.Mesh(new THREE.BoxGeometry(w-1,0.2,d-1),new THREE.MeshStandardMaterial({color:0xdddddd}));
+    floorFF.position.y=0.1; ff.add(floorFF); scene.add(ff);
+    const stairs=new THREE.Mesh(new THREE.BoxGeometry(6,wallH*0.6,10),new THREE.MeshStandardMaterial({color:0x8b5a2b}));
+    stairs.position.set(-hw+6,wallH*0.3,hd-8); scene.add(stairs);
+    let showG=true,showF=true;document.addEventListener('keydown',e=>{if(e.key==='g'){showG=!showG;gf.visible=showG;}if(e.key==='f'){showF=!showF;ff.visible=showF;}if(e.key==='a'){showG=showF=true;gf.visible=ff.visible=true;}});
+    window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+    (function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);})();
+  </script>
+</body>
+</html>
